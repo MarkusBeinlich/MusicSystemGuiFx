@@ -1,6 +1,6 @@
 package de.beinlich.markus.musicsystem.guifx;
 
-import javafx.application.Application;
+import javafx.application.*;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -22,9 +22,15 @@ public class MusicSystemFX extends Application {
 
         Scene scene = new Scene(root);
         setUserAgentStylesheet(STYLESHEET_CASPIAN);
-        stage.setTitle(musicClient.getMusicSystemName() + " - " + musicClient.getLocation() + " -  FX-Client");
+        if (musicClient.getMusicSystemName() != null) {
+            stage.setTitle(musicClient.getMusicSystemName() + " - " + musicClient.getLocation() + " -  FX-Client");
+        }
         stage.setScene(scene);
         stage.show();
+        Platform.runLater(() -> {
+            musicClient.connectToMusicServer();
+        });
+
     }
 
     public static MusicClientFX getMusicClient() {

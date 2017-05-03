@@ -5,8 +5,9 @@
  */
 package de.beinlich.markus.musicsystem.guifx;
 
-import de.beinlich.markus.musicsystem.lib.*;
-import static de.beinlich.markus.musicsystem.lib.ProtokollType.*;
+import de.beinlich.markus.musicsystem.model.net.*;
+import de.beinlich.markus.musicsystem.model.*;
+import static de.beinlich.markus.musicsystem.model.net.ProtokollType.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -39,21 +40,26 @@ public class MusicClientFX implements MusicSystemInterface, MusicSystemControlle
     private MusicPlayerDto musicPlayer;
     private MusicCollectionDto musicCollection;
     private PlayListComponentDto playListComponent;
-    private ObjectProperty<PlayListComponentInterface> playListComponentP;
-    private ObjectProperty<RecordInterface> recordProp;
-    private ObjectProperty<MusicPlayerInterface> activePlayerP;
-    private ListProperty<PlayListComponentInterface> recordP;
-    private ListProperty<RecordInterface> musicCollectionP;
-    private ListProperty<MusicPlayerInterface> musicPlayerP;
-    private ListProperty<String> serverPoolP;
+    private ObjectProperty<PlayListComponentInterface> playListComponentP = new SimpleObjectProperty<>(playListComponent);
+    private ObjectProperty<RecordInterface> recordProp = new SimpleObjectProperty<>(record);
+    private ObjectProperty<MusicPlayerInterface> activePlayerP = new SimpleObjectProperty<>(null);
+    private ListProperty<PlayListComponentInterface> recordP = new SimpleListProperty<>(FXCollections.observableList(new ArrayList<PlayListComponentInterface>()));
+    private ListProperty<RecordInterface> musicCollectionP = new SimpleListProperty<>(FXCollections.observableList(new ArrayList<RecordInterface>()));
+    private ListProperty<MusicPlayerInterface> musicPlayerP = new SimpleListProperty<>(FXCollections.observableList(new ArrayList<MusicPlayerInterface>()));
+    private ListProperty<String> serverPoolP = new SimpleListProperty<>(FXCollections.observableList(new ArrayList<String>()));
+    private StringProperty serverAddrP = new SimpleStringProperty();
     private MusicSystemState musicSystemState;
-    private DoubleProperty volumeP;
-    private DoubleProperty currentTimeTrackP;
-    private DoubleProperty playingTimeP;
+    private DoubleProperty volumeP = new SimpleDoubleProperty(0.0);
+    private DoubleProperty currentTimeTrackP = new SimpleDoubleProperty(0.0);
+    private DoubleProperty playingTimeP = new SimpleDoubleProperty(0.0);
     private final String clientName;
 
     public MusicClientFX(String clientName) {
         this.clientName = clientName;
+
+    }
+
+    void connectToMusicServer() {
         serverPool = ServerPool.getInstance(clientName);
         currentServerAddr = serverPool.getFirstServer();
         System.out.println("Alle:" + serverPool.toString());
@@ -74,15 +80,10 @@ public class MusicClientFX implements MusicSystemInterface, MusicSystemControlle
             //Verbindungs-Parameter in property-file auslagern
             NetProperties netProperties = new NetProperties();
             System.out.println(System.currentTimeMillis() + "new Socket with " + serverAddr.getServer_ip() + serverAddr.getPort());
-//            socket = new Socket("127.0.0.1", serverAddr.getPort());
-//            socket = new Socket(InetAddress.getLocalHost(), serverAddr.getPort());
-//            socket = new Socket("192.168.178.38", 50001);
             if (serverAddr.getServer_ip().equals("127.0.0.1")) {
                 throw new ConnectException();
             }
             socket = new Socket(serverAddr.getServer_ip(), serverAddr.getPort());
-            System.out.println(System.currentTimeMillis() + "socket.connect");
-            //socket.connect(socket.getRemoteSocketAddress() , 0);
             // Erzeugung der Kommunikations-Objekte
             ois = new ObjectInputStream(socket.getInputStream());
             System.out.println(System.currentTimeMillis() + "socket.connect 2");
@@ -121,25 +122,26 @@ public class MusicClientFX implements MusicSystemInterface, MusicSystemControlle
                 // da ansonsten die initialisierung der GUI nicht funktioniert.
                 nachricht = (Protokoll) ois.readObject(); // blockiert!
                 clientInit = (ClientInit) nachricht.getValue();
-//                mca.setClientInit(clientInit);
                 musicSystem = clientInit.getMusicSystem();
                 musicCollection = clientInit.getMusicCollection();
-                ServerPool.getInstance(clientName).addServers(clientInit.getServerPool());
+                serverPool = ServerPool.getInstance(clientName).addServers(clientInit.getServerPool());
                 musicSystemState = musicSystem.activePlayer.musicSystemState;
                 record = musicSystem.activePlayer.record;
                 musicPlayer = musicSystem.activePlayer;
                 playListComponent = musicSystem.activePlayer.currentTrack;
 
-                activePlayerP = new SimpleObjectProperty<>(musicSystem.activePlayer);
-                playListComponentP = new SimpleObjectProperty<>(playListComponent);
-                recordProp = new SimpleObjectProperty<>(record); 
-                recordP = new SimpleListProperty<> (FXCollections.observableList(record.getTracks()));
-                musicPlayerP = new SimpleListProperty<>(FXCollections.observableList(musicSystem.players));
-                serverPoolP = new SimpleListProperty<>(FXCollections.observableList(ServerPool.getInstance(clientName).getActiveServers()));
-                musicCollectionP = new SimpleListProperty<>(FXCollections.observableList(musicCollection.records));
-                currentTimeTrackP = new SimpleDoubleProperty(musicSystem.activePlayer.currentTimeTrack);
-                playingTimeP = new SimpleDoubleProperty(musicSystem.activePlayer.currentTrack.playingTime);
-                volumeP = new SimpleDoubleProperty(musicSystem.activePlayer.volume);
+                activePlayerP.set(musicSystem.activePlayer);
+
+                recordP.set(FXCollections.observableList(record.getTracks()));
+                playListComponentP.set(playListComponent);
+                musicPlayerP.set(FXCollections.observableList(musicSystem.players));
+                serverPoolP.set(FXCollections.observableList(ServerPool.getInstance(clientName).getActiveServers()));
+                getServerAddrP().set(musicSystem.serverAddr.getName());
+                musicCollectionP.set(FXCollections.observableList(musicCollection.records));
+                currentTimeTrackP.set(musicSystem.activePlayer.currentTimeTrack);
+                playingTimeP.set(musicSystem.activePlayer.currentTrack.playingTime);
+                volumeP.set(musicSystem.activePlayer.volume);
+                recordProp.set(record);
             } catch (ClassNotFoundException ex) {
                 System.out.println(ex);
             }
@@ -287,6 +289,9 @@ public class MusicClientFX implements MusicSystemInterface, MusicSystemControlle
 
     @Override
     public String getMusicSystemName() {
+        if (musicSystem == null) {
+            return null;
+        }
         return musicSystem.musicSystemName;
     }
 
@@ -403,6 +408,9 @@ public class MusicClientFX implements MusicSystemInterface, MusicSystemControlle
 
     @Override
     public ServerAddr getServerAddr() {
+        if (musicSystem == null) {
+            return null;
+        }
         return musicSystem.serverAddr;
     }
 
@@ -524,7 +532,7 @@ public class MusicClientFX implements MusicSystemInterface, MusicSystemControlle
                         case MUSIC_COLLECTION_DTO:
                             musicClient.musicCollection = (MusicCollectionDto) nachricht.getValue();
                             Platform.runLater(() -> {
-                                getMusicCollectionP().setAll(musicCollection.getRecords());
+                                musicCollectionP.setAll(musicCollection.getRecords());
                             });
                             break;
                         case MUSIC_PLAYER_DTO:
@@ -532,14 +540,14 @@ public class MusicClientFX implements MusicSystemInterface, MusicSystemControlle
                             Platform.runLater(() -> {
                                 musicClient.musicSystem.activePlayer = musicPlayer;
                                 musicClient.musicPlayer = musicPlayer;
-                                getActivePlayerP().set(musicPlayer);
-                            }); 
+                                activePlayerP.set(musicPlayer);
+                            });
                             break;
                         case RECORD_DTO:
                             musicClient.record = (RecordDto) nachricht.getValue();
                             Platform.runLater(() -> {
-                                getRecordP().setAll(musicClient.record.getTracks());
-                                getRecordProp().set(musicClient.record);
+                                recordP.setAll(musicClient.record.getTracks());
+                                recordProp.set(musicClient.record);
                             });
                             break;
                         case STATE:
@@ -550,26 +558,26 @@ public class MusicClientFX implements MusicSystemInterface, MusicSystemControlle
                         case PLAY_LIST_COMPONENT_DTO:
                             playListComponent = (PlayListComponentDto) nachricht.getValue();
                             Platform.runLater(() -> {
-                                getPlayListComponentP().setValue(playListComponent);
-                                getPlayingTimeP().setValue(playListComponent.playingTime);
+                                playListComponentP.setValue(playListComponent);
+                                playingTimeP.setValue(playListComponent.playingTime);
                             });
                             break;
                         case TRACK_TIME:
                             trackTime = (int) nachricht.getValue();
                             Platform.runLater(() -> {
-                                getCurrentTimeTrackP().setValue(trackTime);
+                                currentTimeTrackP.setValue(trackTime);
                             });
                             break;
                         case VOLUME:
                             volume = (double) nachricht.getValue();
                             Platform.runLater(() -> {
-                                getVolumeP().setValue(volume);
+                                volumeP.setValue(volume);
                             });
                             break;
                         case SERVER_POOL:
                             musicClient.serverPool = (ServerPool) nachricht.getValue();
                             Platform.runLater(() -> {
-                                getServerPoolP().setAll(musicClient.serverPool.getActiveServers());
+                                serverPoolP.setAll(musicClient.serverPool.getActiveServers());
                             });
                             break;
                         default:
@@ -584,23 +592,14 @@ public class MusicClientFX implements MusicSystemInterface, MusicSystemControlle
         }
     }
 
-    /**
-     * @return the currentServerAddr
-     */
     public ServerAddr getCurrentServerAddr() {
         return currentServerAddr;
     }
 
-    /**
-     * @param currentServerAddr the currentServerAddr to set
-     */
     public void setCurrentServerAddr(ServerAddr currentServerAddr) {
         this.currentServerAddr = currentServerAddr;
     }
 
-    /**
-     * @return the musicCollection
-     */
     public MusicCollectionDto getMusicCollection() {
         return musicCollection;
     }
@@ -609,9 +608,6 @@ public class MusicClientFX implements MusicSystemInterface, MusicSystemControlle
         return serverPool;
     }
 
-    /**
-     * @return the clientName
-     */
     public String getClientName() {
         return clientName;
     }
@@ -620,80 +616,46 @@ public class MusicClientFX implements MusicSystemInterface, MusicSystemControlle
         return playListComponentP;
     }
 
-    public void setPlayListComponentP(ObjectProperty<PlayListComponentInterface> playListComponentP) {
-        this.playListComponentP = playListComponentP;
-    }
-
     public ListProperty<PlayListComponentInterface> getRecordP() {
         return recordP;
-    }
-
-    public void setRecordP(ListProperty<PlayListComponentInterface> recordP) {
-        this.recordP = recordP;
     }
 
     public ListProperty<RecordInterface> getMusicCollectionP() {
         return musicCollectionP;
     }
 
-    public void setMusicCollectionP(ListProperty<RecordInterface> musicCollectionP) {
-        this.musicCollectionP = musicCollectionP;
-    }
-
     public ListProperty<MusicPlayerInterface> getMusicPlayerP() {
         return musicPlayerP;
-    }
-
-    public void setMusicPlayerP(ListProperty<MusicPlayerInterface> musicPlayerP) {
-        this.musicPlayerP = musicPlayerP;
     }
 
     public ListProperty<String> getServerPoolP() {
         return serverPoolP;
     }
 
-    public void setServerPoolP(ListProperty<String> serverPoolP) {
-        this.serverPoolP = serverPoolP;
-    }
-
     public DoubleProperty getVolumeP() {
         return volumeP;
-    }
-
-    public void setVolumeP(DoubleProperty volumeP) {
-        this.volumeP = volumeP;
     }
 
     public final DoubleProperty getCurrentTimeTrackP() {
         return currentTimeTrackP;
     }
 
-    public void setCurrentTimeTrackP(DoubleProperty trackTime) {
-        this.currentTimeTrackP = trackTime;
-    }
-
     public ObjectProperty<RecordInterface> getRecordProp() {
         return recordProp;
-    }
-
-    public void setRecordProp(ObjectProperty<RecordInterface> recordProp) {
-        this.recordProp = recordProp;
     }
 
     public ObjectProperty<MusicPlayerInterface> getActivePlayerP() {
         return activePlayerP;
     }
 
-    public void setActivePlayerP(ObjectProperty<MusicPlayerInterface> activePlayerP) {
-        this.activePlayerP = activePlayerP;
-    }
-
-    public DoubleProperty getPlayingTimeP() {
+    DoubleProperty getPlayingTimeP() {
         return playingTimeP;
     }
 
-    public void setPlayingTimeP(DoubleProperty playingTimeP) {
-        this.playingTimeP = playingTimeP;
+    /**
+     * @return the serverAddrP
+     */
+    public StringProperty getServerAddrP() {
+        return serverAddrP;
     }
-
 }

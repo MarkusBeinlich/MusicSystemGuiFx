@@ -1,11 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package de.beinlich.markus.musicsystem.guifx;
 
-import de.beinlich.markus.musicsystem.lib.*;
 import java.io.ByteArrayInputStream;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -17,6 +11,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.image.*;
+import de.beinlich.markus.musicsystem.model.*;
 
 /**
  *
@@ -92,14 +87,21 @@ public class FXMLDocumentController implements Initializable {
         });
 
         comboBoxServer.itemsProperty().bindBidirectional(musicClient.getServerPoolP());
-        comboBoxServer.getSelectionModel().select(musicSystem.getServerAddr().getName());
+        if (musicSystem.getServerAddr() != null) {
+            comboBoxServer.getSelectionModel().select(musicSystem.getServerAddr().getName());
+        }
         comboBoxServer.setOnAction((event) -> {
-            if (false == musicClient.switchToServer(comboBoxServer.getValue())) {
-                Alert alert = new Alert(Alert.AlertType.ERROR, "Server " + comboBoxServer.getValue() + " ist im Moment nicht erreichbar. Eventuell ist er nicht gestartet.");
+            if (! comboBoxServer.getValue().equals(musicClient.getCurrentServerAddr().getName())) {
+                if (false == musicClient.switchToServer(comboBoxServer.getValue())) {
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "Server " + comboBoxServer.getValue() + " ist im Moment nicht erreichbar. Eventuell ist er nicht gestartet.");
 //                    comboBoxServer.getSelectionModel().select(oldValue);
-            } else {
-                System.out.println(System.currentTimeMillis() + "**************MusicClient ist aktiv");
+                } else {
+                    System.out.println(System.currentTimeMillis() + "**************MusicClient ist aktiv");
+                }
             }
+        });
+        musicClient.getServerAddrP().addListener((observable, oldValue, newValue) -> {
+            comboBoxServer.getSelectionModel().select(newValue);
         });
 
         comboBoxRecords.itemsProperty().bindBidirectional(musicClient.getMusicCollectionP());
@@ -132,10 +134,7 @@ public class FXMLDocumentController implements Initializable {
         listViewTrackList.setOnMouseClicked((value) -> {
             musicSystemController.setCurrentTrack(listViewTrackList.getSelectionModel().getSelectedItem());
         });
-        
         musicClient.getPlayListComponentP().addListener((observable, oldValue, newValue) -> {
-//            System.out.println("getPlayListComponentP:" + newValue.getUid() + newValue + newValue.hashCode()+
-//                    " - " + listViewTrackList.getItems().get(0).getUid()+ listViewTrackList.getItems().get(0).hashCode() +" - " + listViewTrackList.getItems().indexOf(newValue));
             listViewTrackList.getSelectionModel().select(newValue);
             labelCurrentTrack.setText(newValue.getTitle() + " : " + musicSystem.getCurrentTrack().getPlayingTime());
             sliderProgress.setValue(0);
@@ -153,7 +152,6 @@ public class FXMLDocumentController implements Initializable {
         });
 
         System.out.println(System.currentTimeMillis() + "musicSystem ist übergeben:" + musicSystem);
-
 
     }
 
