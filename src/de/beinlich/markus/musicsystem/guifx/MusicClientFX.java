@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package de.beinlich.markus.musicsystem.guifx;
 
 import de.beinlich.markus.musicsystem.model.net.*;
@@ -61,44 +56,55 @@ public class MusicClientFX implements Runnable, MusicSystemInterface, MusicSyste
 
     @Override
     public void run() {
-        serverPool = ServerPool.getInstance(clientName);
-        currentServerAddr = serverPool.getFirstServer();
-        System.out.println("Alle:" + serverPool.toString());
-        System.out.println("currentServerAddr: " + currentServerAddr);
-        netzwerkEinrichten(currentServerAddr);
+        netzwerkEinrichten();
         musicSystemObjectRead();
         startReaderThread();
         System.out.println(System.currentTimeMillis() + "netzwerk eingerichtet: ");
     }
 
-    private void netzwerkEinrichten(ServerAddr serverAddr) {
+    private void netzwerkEinrichten() {
+        serverPool = ServerPool.getInstance(clientName);
+        System.out.println("Alle:" + serverPool.toString());
+        while (socket == null) {
+            for (Map.Entry<String, ServerAddr> poolEntry : serverPool.getServers().entrySet()) {
+                ServerAddr serverAddr = poolEntry.getValue();
+                System.out.println("ServerAddr: " + serverAddr);
+                try {
+                    // Erzeugung eines Socket-Objekts
+                    //                  Rechner (Adresse / Name)
+                    //                  |            Port
 
-        try {
-            // Erzeugung eines Socket-Objekts
-            //                  Rechner (Adresse / Name)
-            //                  |            Port
-
-            //Verbindungs-Parameter in property-file auslagern
-            NetProperties netProperties = new NetProperties();
-            System.out.println(System.currentTimeMillis() + "new Socket with " + serverAddr.getServer_ip() + serverAddr.getPort());
-            if (serverAddr.getServer_ip().equals("127.0.0.1")) {
-                throw new ConnectException();
+                    //Verbindungs-Parameter in property-file auslagern
+                    NetProperties netProperties = new NetProperties();
+                    System.out.println(System.currentTimeMillis() + "new Socket with " + serverAddr.getServer_ip() + serverAddr.getPort());
+                    if (serverAddr.getServer_ip().equals("127.0.0.1")) {
+                        throw new ConnectException();
+                    }
+//            socket = new Socket(InetAddress.getLocalHost(), 50001);
+                    socket = new Socket(serverAddr.getServer_ip(), serverAddr.getPort());
+                    // Erzeugung der Kommunikations-Objekte
+                    ois = new ObjectInputStream(socket.getInputStream());
+                    System.out.println(System.currentTimeMillis() + "socket.connect 2");
+                    oos = new ObjectOutputStream(socket.getOutputStream());
+                } catch (ConnectException e) {
+                    System.out.println(System.currentTimeMillis() + "Error while connecting. " + e.getMessage());
+                    continue;
+                } catch (SocketTimeoutException e) {
+                    System.out.println(System.currentTimeMillis() + "Connection: " + e.getMessage() + ".");
+                    continue;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
-            socket = new Socket(serverAddr.getServer_ip(), serverAddr.getPort());
-            // Erzeugung der Kommunikations-Objekte
-            ois = new ObjectInputStream(socket.getInputStream());
-            System.out.println(System.currentTimeMillis() + "socket.connect 2");
-            oos = new ObjectOutputStream(socket.getOutputStream());
-        } catch (ConnectException e) {
-            System.out.println(System.currentTimeMillis() + "Error while connecting. " + e.getMessage());
-            this.tryToReconnect();
-        } catch (SocketTimeoutException e) {
-            System.out.println(System.currentTimeMillis() + "Connection: " + e.getMessage() + ".");
-            this.tryToReconnect();
-        } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println(System.currentTimeMillis() + "socket.connect3");
+            if (socket == null) {
+                try {
+                    Thread.sleep(10_000);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(MusicClientFX.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
         }
-        System.out.println(System.currentTimeMillis() + "socket.connect3");
     }
 
     private void startReaderThread() {
@@ -131,18 +137,19 @@ public class MusicClientFX implements Runnable, MusicSystemInterface, MusicSyste
                 musicPlayer = musicSystem.activePlayer;
                 playListComponent = musicSystem.activePlayer.currentTrack;
 
-                activePlayerP.set(musicSystem.activePlayer);
-
-                recordP.set(FXCollections.observableList(record.getTracks()));
-                playListComponentP.set(playListComponent);
-                musicPlayerP.set(FXCollections.observableList(musicSystem.players));
-                serverPoolP.set(FXCollections.observableList(ServerPool.getInstance(clientName).getActiveServers()));
-                getServerAddrP().set(musicSystem.serverAddr.getName());
-                musicCollectionP.set(FXCollections.observableList(musicCollection.records));
-                currentTimeTrackP.set(musicSystem.activePlayer.currentTimeTrack);
-                playingTimeP.set(musicSystem.activePlayer.currentTrack.playingTime);
-                volumeP.set(musicSystem.activePlayer.volume);
-                recordProp.set(record);
+                Platform.runLater(() -> {
+                    activePlayerP.set(musicSystem.activePlayer);
+                    recordP.set(FXCollections.observableList(record.getTracks()));
+                    playListComponentP.set(playListComponent);
+                    musicPlayerP.set(FXCollections.observableList(musicSystem.players));
+                    serverPoolP.set(FXCollections.observableList(ServerPool.getInstance(clientName).getActiveServers()));
+                    getServerAddrP().set(musicSystem.serverAddr.getName());
+                    musicCollectionP.set(FXCollections.observableList(musicCollection.records));
+                    currentTimeTrackP.set(musicSystem.activePlayer.currentTimeTrack);
+                    playingTimeP.set(musicSystem.activePlayer.currentTrack.playingTime);
+                    volumeP.set(musicSystem.activePlayer.volume);
+                    recordProp.set(record);
+                });
             } catch (ClassNotFoundException ex) {
                 System.out.println(ex);
             }
@@ -167,12 +174,12 @@ public class MusicClientFX implements Runnable, MusicSystemInterface, MusicSyste
         //        tryAllAddressesOnLan();
         try {
             System.out.println("Start sleep");
-            Thread.sleep(3000);
+            Thread.sleep(10_000);
             System.out.println("Ende Sleep");
         } catch (InterruptedException ex) {
             Logger.getLogger(MusicClientFX.class.getName()).log(Level.SEVERE, null, ex);
         }
-        netzwerkEinrichten(currentServerAddr);
+        netzwerkEinrichten();
     }
 
     private void tryAllAddressesOnLan() {
@@ -218,7 +225,7 @@ public class MusicClientFX implements Runnable, MusicSystemInterface, MusicSyste
         try {
             socket = new Socket(hostAddress, port);
             socket.close();
-            this.netzwerkEinrichten(new ServerAddr(port, hostAddress, currentServerAddr.getName(), true));
+//            this.netzwerkEinrichten(new ServerAddr(port, hostAddress, currentServerAddr.getName(), true));
         } catch (ConnectException e) {
             System.out.println(System.currentTimeMillis() + "Error while connecting. " + e.getMessage());
         } catch (SocketTimeoutException e) {
