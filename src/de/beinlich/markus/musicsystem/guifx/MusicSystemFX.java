@@ -13,6 +13,7 @@ import javafx.stage.Stage;
 public class MusicSystemFX extends Application {
 
     static private MusicClientFX musicClient;
+    private Thread clientThread;
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -27,9 +28,12 @@ public class MusicSystemFX extends Application {
         }
         stage.setScene(scene);
         stage.show();
-        Platform.runLater(() -> {
-            musicClient.connectToMusicServer();
-        });
+        clientThread = new Thread(musicClient);
+        clientThread.setDaemon(true);
+        clientThread.start();
+//        Platform.runLater(() -> {
+//            musicClient.connectToMusicServer();
+//        });
 
     }
 

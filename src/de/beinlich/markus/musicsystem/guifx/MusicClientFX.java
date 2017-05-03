@@ -20,7 +20,7 @@ import javafx.collections.FXCollections;
  *
  * @author Markus Beinlich
  */
-public class MusicClientFX implements MusicSystemInterface, MusicSystemControllerInterface, MusicCollectionInterface {
+public class MusicClientFX implements Runnable, MusicSystemInterface, MusicSystemControllerInterface, MusicCollectionInterface {
 
     // Verbindungsaufbau mit dem Server
     public Socket socket;
@@ -59,7 +59,8 @@ public class MusicClientFX implements MusicSystemInterface, MusicSystemControlle
 
     }
 
-    void connectToMusicServer() {
+    @Override
+    public void run() {
         serverPool = ServerPool.getInstance(clientName);
         currentServerAddr = serverPool.getFirstServer();
         System.out.println("Alle:" + serverPool.toString());
@@ -163,7 +164,15 @@ public class MusicClientFX implements MusicSystemInterface, MusicSystemControlle
     }
 
     private void tryToReconnect() {
-        tryAllAddressesOnLan();
+        //        tryAllAddressesOnLan();
+        try {
+            System.out.println("Start sleep");
+            Thread.sleep(3000);
+            System.out.println("Ende Sleep");
+        } catch (InterruptedException ex) {
+            Logger.getLogger(MusicClientFX.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        netzwerkEinrichten(currentServerAddr);
     }
 
     private void tryAllAddressesOnLan() {
