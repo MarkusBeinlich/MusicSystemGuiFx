@@ -12,6 +12,10 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.image.*;
 import de.beinlich.markus.musicsystem.model.*;
+import de.beinlich.markus.musicsystem.model.net.*;
+import java.net.*;
+import java.util.logging.*;
+import javafx.event.*;
 
 /**
  *
@@ -32,6 +36,8 @@ public class FXMLDocumentController implements Initializable {
     private Button buttonStop;
     @FXML
     private Button buttonCSS;
+    @FXML
+    private Button buttonIpAdd;
     @FXML
     private Slider sliderVolume;
     @FXML
@@ -78,6 +84,23 @@ public class FXMLDocumentController implements Initializable {
         buttonNext.setOnAction(event -> musicSystemController.next());
         buttonPrevious.setOnAction(event -> musicSystemController.previous());
         buttonPause.setOnAction(event -> musicSystemController.pause());
+        buttonCssProperties();
+        buttonIpAddProperties();
+        
+        comboBoxServerProperties();
+        comboBoxRecordsProperties();
+        comboBoxPlayerProperties();
+        
+        listViewTrackListProperties();
+        
+        sliderVolumeProperties();
+        sliderProgressProperties();
+
+        System.out.println(System.currentTimeMillis() + "musicSystem ist übergeben:" + musicSystem);
+
+    }
+
+    private void buttonCssProperties() {
         buttonCSS.setOnAction(event -> {
             if (Application.getUserAgentStylesheet().equals(STYLESHEET_CASPIAN)) {
                 setUserAgentStylesheet(STYLESHEET_MODENA);
@@ -85,35 +108,31 @@ public class FXMLDocumentController implements Initializable {
                 setUserAgentStylesheet(STYLESHEET_CASPIAN);
             }
         });
+    }
 
-        comboBoxServer.itemsProperty().bindBidirectional(musicClient.getServerPoolP());
-        if (musicSystem.getServerAddr() != null) {
-            comboBoxServer.getSelectionModel().select(musicSystem.getServerAddr().getName());
-        }
-        comboBoxServer.setOnAction((event) -> {
-            if (! comboBoxServer.getValue().equals(musicClient.getCurrentServerAddr().getName())) {
-                if (false == musicClient.switchToServer(comboBoxServer.getValue())) {
-                    Alert alert = new Alert(Alert.AlertType.ERROR, "Server " + comboBoxServer.getValue() + " ist im Moment nicht erreichbar. Eventuell ist er nicht gestartet.");
-//                    comboBoxServer.getSelectionModel().select(oldValue);
-                } else {
-                    System.out.println(System.currentTimeMillis() + "**************MusicClient ist aktiv");
-                }
+    private void buttonIpAddProperties() {
+        buttonIpAdd.setOnAction(event -> {
+            try {
+                musicClient.getServerPool().addServer("Local", new ServerAddr(50001, InetAddress.getLocalHost().getHostAddress(), "Local", true));
+            } catch (UnknownHostException ex) {
+                Logger.getLogger(AddLocalIpToServerPool.class.getName()).log(Level.SEVERE, null, ex);
             }
         });
-        musicClient.getServerAddrP().addListener((observable, oldValue, newValue) -> {
-            comboBoxServer.getSelectionModel().select(newValue);
-        });
+    }
 
+    private void comboBoxRecordsProperties() {
         comboBoxRecords.itemsProperty().bindBidirectional(musicClient.getMusicCollectionP());
         comboBoxRecords.getSelectionModel().select(musicSystem.getRecord());
-        comboBoxRecords.setOnAction((event) -> {
+        comboBoxRecords.setOnAction((ActionEvent event) -> {
             musicSystemController.setRecord(comboBoxRecords.getValue());
             cover.setImage(showCover());
         });
         musicClient.getRecordProp().addListener((observable, oldValue, newValue) -> {
             comboBoxRecords.getSelectionModel().select(newValue);
         });
+    }
 
+    private void comboBoxPlayerProperties() {
         comboBoxPlayer.itemsProperty().bindBidirectional(musicClient.getMusicPlayerP());
         comboBoxPlayer.getSelectionModel().select(musicSystem.getActivePlayer());
         comboBoxPlayer.setOnAction((event) -> {
@@ -129,7 +148,9 @@ public class FXMLDocumentController implements Initializable {
         musicClient.getActivePlayerP().addListener((observable, oldValue, newValue) -> {
             comboBoxPlayer.getSelectionModel().select(newValue);
         });
+    }
 
+    private void listViewTrackListProperties() {
         listViewTrackList.itemsProperty().bindBidirectional(musicClient.getRecordP());
         listViewTrackList.setOnMouseClicked((value) -> {
             musicSystemController.setCurrentTrack(listViewTrackList.getSelectionModel().getSelectedItem());
@@ -140,19 +161,40 @@ public class FXMLDocumentController implements Initializable {
             sliderProgress.setValue(0);
             sliderProgress.setMax(newValue.getPlayingTime());
         });
+    }
 
+    private void sliderVolumeProperties() {
         sliderVolume.valueProperty().bindBidirectional(musicClient.getVolumeP());
         sliderVolume.setOnMouseReleased((event) -> {
             musicSystemController.setVolume(sliderVolume.getValue());
         });
+    }
 
+    private void sliderProgressProperties() {
         sliderProgress.valueProperty().bindBidirectional(musicClient.getCurrentTimeTrackP());
         sliderProgress.setOnMouseReleased((event) -> {
             musicSystemController.seek((int) sliderProgress.getValue());
         });
+    }
 
-        System.out.println(System.currentTimeMillis() + "musicSystem ist übergeben:" + musicSystem);
-
+    private void comboBoxServerProperties() {
+        comboBoxServer.itemsProperty().bindBidirectional(musicClient.getServerPoolP());
+        if (musicSystem.getServerAddr() != null) {
+            comboBoxServer.getSelectionModel().select(musicSystem.getServerAddr().getName());
+        }
+        comboBoxServer.setOnAction((event) -> {
+            if (!comboBoxServer.getValue().equals(musicClient.getCurrentServerAddr().getName())) {
+                if (false == musicClient.switchToServer(comboBoxServer.getValue())) {
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "Server " + comboBoxServer.getValue() + " ist im Moment nicht erreichbar. Eventuell ist er nicht gestartet.");
+//                    comboBoxServer.getSelectionModel().select(oldValue);
+                } else {
+                    System.out.println(System.currentTimeMillis() + "**************MusicClient ist aktiv");
+                }
+            }
+        });
+        musicClient.getServerAddrP().addListener((observable, oldValue, newValue) -> {
+            comboBoxServer.getSelectionModel().select(newValue);
+        });
     }
 
     private Image showCover() {

@@ -35,21 +35,32 @@ public class MusicClientFX implements Runnable, MusicSystemInterface, MusicSyste
     private MusicPlayerDto musicPlayer;
     private MusicCollectionDto musicCollection;
     private PlayListComponentDto playListComponent;
-    private ObjectProperty<PlayListComponentInterface> playListComponentP = new SimpleObjectProperty<>(playListComponent);
-    private ObjectProperty<RecordInterface> recordProp = new SimpleObjectProperty<>(record);
-    private ObjectProperty<MusicPlayerInterface> activePlayerP = new SimpleObjectProperty<>(null);
-    private ListProperty<PlayListComponentInterface> recordP = new SimpleListProperty<>(FXCollections.observableList(new ArrayList<PlayListComponentInterface>()));
-    private ListProperty<RecordInterface> musicCollectionP = new SimpleListProperty<>(FXCollections.observableList(new ArrayList<RecordInterface>()));
-    private ListProperty<MusicPlayerInterface> musicPlayerP = new SimpleListProperty<>(FXCollections.observableList(new ArrayList<MusicPlayerInterface>()));
-    private ListProperty<String> serverPoolP = new SimpleListProperty<>(FXCollections.observableList(new ArrayList<String>()));
-    private StringProperty serverAddrP = new SimpleStringProperty();
+    private final ObjectProperty<PlayListComponentInterface> playListComponentP;
+    private final ObjectProperty<RecordInterface> recordProp;
+    private final ObjectProperty<MusicPlayerInterface> activePlayerP;
+    private final ListProperty<PlayListComponentInterface> recordP;
+    private final ListProperty<RecordInterface> musicCollectionP;
+    private final ListProperty<MusicPlayerInterface> musicPlayerP;
+    private final ListProperty<String> serverPoolP;
+    private final StringProperty serverAddrP;
     private MusicSystemState musicSystemState;
-    private DoubleProperty volumeP = new SimpleDoubleProperty(0.0);
-    private DoubleProperty currentTimeTrackP = new SimpleDoubleProperty(0.0);
-    private DoubleProperty playingTimeP = new SimpleDoubleProperty(0.0);
+    private final DoubleProperty volumeP;
+    private final DoubleProperty currentTimeTrackP;
+    private final DoubleProperty playingTimeP;
     private final String clientName;
 
     public MusicClientFX(String clientName) {
+        this.playingTimeP = new SimpleDoubleProperty(0.0);
+        this.currentTimeTrackP = new SimpleDoubleProperty(0.0);
+        this.volumeP = new SimpleDoubleProperty(0.0);
+        this.serverAddrP = new SimpleStringProperty();
+        this.musicPlayerP = new SimpleListProperty<>(FXCollections.observableList(new ArrayList<>()));
+        this.serverPoolP = new SimpleListProperty<>(FXCollections.observableList(new ArrayList<>()));
+        this.musicCollectionP = new SimpleListProperty<>(FXCollections.observableList(new ArrayList<>()));
+        this.recordP = new SimpleListProperty<>(FXCollections.observableList(new ArrayList<>()));
+        this.activePlayerP = new SimpleObjectProperty<>(null);
+        this.recordProp = new SimpleObjectProperty<>(record);
+        this.playListComponentP = new SimpleObjectProperty<>(playListComponent);
         this.clientName = clientName;
 
     }
@@ -70,17 +81,11 @@ public class MusicClientFX implements Runnable, MusicSystemInterface, MusicSyste
                 ServerAddr serverAddr = poolEntry.getValue();
                 System.out.println("ServerAddr: " + serverAddr);
                 try {
-                    // Erzeugung eines Socket-Objekts
-                    //                  Rechner (Adresse / Name)
-                    //                  |            Port
-
-                    //Verbindungs-Parameter in property-file auslagern
                     NetProperties netProperties = new NetProperties();
                     System.out.println(System.currentTimeMillis() + "new Socket with " + serverAddr.getServer_ip() + serverAddr.getPort());
                     if (serverAddr.getServer_ip().equals("127.0.0.1")) {
                         throw new ConnectException();
                     }
-//            socket = new Socket(InetAddress.getLocalHost(), 50001);
                     socket = new Socket(serverAddr.getServer_ip(), serverAddr.getPort());
                     // Erzeugung der Kommunikations-Objekte
                     ois = new ObjectInputStream(socket.getInputStream());
@@ -88,10 +93,8 @@ public class MusicClientFX implements Runnable, MusicSystemInterface, MusicSyste
                     oos = new ObjectOutputStream(socket.getOutputStream());
                 } catch (ConnectException e) {
                     System.out.println(System.currentTimeMillis() + "Error while connecting. " + e.getMessage());
-                    continue;
                 } catch (SocketTimeoutException e) {
                     System.out.println(System.currentTimeMillis() + "Connection: " + e.getMessage() + ".");
-                    continue;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
