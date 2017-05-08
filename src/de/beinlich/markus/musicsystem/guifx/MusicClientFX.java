@@ -75,6 +75,7 @@ public class MusicClientFX implements Runnable, MusicSystemInterface, MusicSyste
 
     private void netzwerkEinrichten() {
         serverPool = ServerPool.getInstance(clientName);
+        serverPool.findServers();
         System.out.println("Alle:" + serverPool.toString());
         while (socket == null) {
             for (Map.Entry<String, ServerAddr> poolEntry : serverPool.getServers().entrySet()) {
