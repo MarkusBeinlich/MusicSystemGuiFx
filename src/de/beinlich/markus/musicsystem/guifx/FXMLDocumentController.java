@@ -183,7 +183,8 @@ public class FXMLDocumentController implements Initializable {
             comboBoxServer.getSelectionModel().select(musicSystem.getServerAddr().getName());
         }
         comboBoxServer.setOnAction((event) -> {
-            if (!comboBoxServer.getValue().equals(musicClient.getCurrentServerAddr().getName())) {
+            if (comboBoxServer.getValue() != null 
+                    && !comboBoxServer.getValue().equals(musicClient.getCurrentServerAddr().getName())) {
                 if (false == musicClient.switchToServer(comboBoxServer.getValue())) {
                     Alert alert = new Alert(Alert.AlertType.ERROR, "Server " + comboBoxServer.getValue() + " ist im Moment nicht erreichbar. Eventuell ist er nicht gestartet.");
 //                    comboBoxServer.getSelectionModel().select(oldValue);

@@ -74,13 +74,13 @@ public class MusicClientFX implements Runnable, MusicSystemInterface, MusicSyste
     }
 
     private void netzwerkEinrichten() {
-        serverPool = ServerPool.getInstance(clientName);
-        serverPool.findServers();
+        serverPool = ServerPool.getInstance(null);
+//        serverPool.findServers();
         System.out.println("Alle:" + serverPool.toString());
         while (socket == null) {
             for (Map.Entry<String, ServerAddr> poolEntry : serverPool.getServers().entrySet()) {
                 ServerAddr serverAddr = poolEntry.getValue();
-                System.out.println("ServerAddr: " + serverAddr);
+                System.out.println("ServerAddr1: " + serverAddr);
                 try {
                     NetProperties netProperties = new NetProperties();
                     System.out.println(System.currentTimeMillis() + "new Socket with " + serverAddr.getServer_ip() + serverAddr.getPort());
@@ -92,6 +92,7 @@ public class MusicClientFX implements Runnable, MusicSystemInterface, MusicSyste
                     ois = new ObjectInputStream(socket.getInputStream());
                     System.out.println(System.currentTimeMillis() + "socket.connect 2");
                     oos = new ObjectOutputStream(socket.getOutputStream());
+                    break;
                 } catch (ConnectException e) {
                     System.out.println(System.currentTimeMillis() + "Error while connecting. " + e.getMessage());
                 } catch (SocketTimeoutException e) {
@@ -102,11 +103,13 @@ public class MusicClientFX implements Runnable, MusicSystemInterface, MusicSyste
             }
             System.out.println(System.currentTimeMillis() + "socket.connect3");
             if (socket == null) {
+                serverPool.findServers();
                 try {
                     Thread.sleep(10_000);
                 } catch (InterruptedException ex) {
                     Logger.getLogger(MusicClientFX.class.getName()).log(Level.SEVERE, null, ex);
                 }
+
             }
         }
     }
@@ -135,18 +138,19 @@ public class MusicClientFX implements Runnable, MusicSystemInterface, MusicSyste
                 clientInit = (ClientInit) nachricht.getValue();
                 musicSystem = clientInit.getMusicSystem();
                 musicCollection = clientInit.getMusicCollection();
-                serverPool = ServerPool.getInstance(clientName).addServers(clientInit.getServerPool());
+                serverPool = ServerPool.getInstance(null).addServers(clientInit.getServerPool());
                 musicSystemState = musicSystem.activePlayer.musicSystemState;
                 record = musicSystem.activePlayer.record;
                 musicPlayer = musicSystem.activePlayer;
                 playListComponent = musicSystem.activePlayer.currentTrack;
+                currentServerAddr = musicSystem.serverAddr;
 
                 Platform.runLater(() -> {
                     activePlayerP.set(musicSystem.activePlayer);
                     recordP.set(FXCollections.observableList(record.getTracks()));
                     playListComponentP.set(playListComponent);
                     musicPlayerP.set(FXCollections.observableList(musicSystem.players));
-                    serverPoolP.set(FXCollections.observableList(ServerPool.getInstance(clientName).getActiveServers()));
+                    serverPoolP.set(FXCollections.observableList(ServerPool.getInstance(null).getActiveServers()));
                     getServerAddrP().set(musicSystem.serverAddr.getName());
                     musicCollectionP.set(FXCollections.observableList(musicCollection.records));
                     currentTimeTrackP.set(musicSystem.activePlayer.currentTimeTrack);
@@ -174,81 +178,18 @@ public class MusicClientFX implements Runnable, MusicSystemInterface, MusicSyste
         }
     }
 
-    private void tryToReconnect() {
-        //        tryAllAddressesOnLan();
-        try {
-            System.out.println("Start sleep");
-            Thread.sleep(10_000);
-            System.out.println("Ende Sleep");
-        } catch (InterruptedException ex) {
-            Logger.getLogger(MusicClientFX.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        netzwerkEinrichten();
-    }
-
-    private void tryAllAddressesOnLan() {
-        InetAddress localhost;
-        try {
-            localhost = InetAddress.getLocalHost();
-        } catch (UnknownHostException ex) {
-            Logger.getLogger(MusicClientFX.class.getName()).log(Level.SEVERE, null, ex);
-            return;
-        }
-        byte[] ip = localhost.getAddress();
-
-        for (int i = 1; i <= 254; i++) {
-            try {
-                ip[3] = (byte) i;
-                InetAddress address = InetAddress.getByAddress(ip);
-                tryAddress(address);
-            } catch (UnknownHostException e) {
-                Logger.getLogger(MusicClientFX.class.getName()).log(Level.SEVERE, null, e);
-            }
-        }
-    }
-
-    private void tryAddress(InetAddress address) {
-        try {
-            if (address.isReachable(10)) {
-                System.out.println(address.toString().substring(1) + " is on the network");
-                tryAllPorts(address.getHostAddress());
-            }
-        } catch (IOException ex) {
-            Logger.getLogger(MusicClientFX.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    private void tryAllPorts(String hostAddress) {
-        for (int j = 1; j <= 3; j++) {
-            tryToConnectServer(hostAddress, 50000 + j);
-        }
-    }
-
-    private void tryToConnectServer(String hostAddress, int port) {
-        Socket socket;
-        try {
-            socket = new Socket(hostAddress, port);
-            socket.close();
-//            this.netzwerkEinrichten(new ServerAddr(port, hostAddress, currentServerAddr.getName(), true));
-        } catch (ConnectException e) {
-            System.out.println(System.currentTimeMillis() + "Error while connecting. " + e.getMessage());
-        } catch (SocketTimeoutException e) {
-            System.out.println(System.currentTimeMillis() + "Connection: " + e.getMessage() + ".");
-        } catch (IOException e) {
-            Logger.getLogger(MusicClientFX.class.getName()).log(Level.SEVERE, null, e);
-        }
-    }
-
     public boolean switchToServer(String newServer) {
         ServerAddr serverAddr;
         System.out.println("switchToServer:" + newServer);
         serverAddr = serverPool.getServers().get(newServer);
-        System.out.println("switchToServer:" + serverAddr + ServerPool.getInstance(clientName));
+        System.out.println("switchToServer:" + serverAddr + ServerPool.getInstance(null));
 
         try {
             //wenn es geklappt hat, kann die Verbindung zum alten Server getrennt werden
             System.out.println("Old Socket:" + socket.hashCode());
             newSocket = new Socket(serverAddr.getServer_ip(), serverAddr.getPort());
+            oos.writeObject(new Protokoll(ProtokollType.CLIENT_DISCONNECT, true));
+            oos.flush();
             socket.close();
             System.out.println("Old Socket:" + socket.hashCode());
             System.out.println("LocalSocketAddress: " + newSocket.getLocalSocketAddress());
@@ -607,7 +548,7 @@ public class MusicClientFX implements Runnable, MusicSystemInterface, MusicSyste
 
             } catch (IOException | ClassNotFoundException ex) {
                 System.out.println(System.currentTimeMillis() + "CLIENT: Verbindung zum Server beendet - " + ex);
-                ex.printStackTrace();
+//                ex.printStackTrace();
             }
         }
     }
