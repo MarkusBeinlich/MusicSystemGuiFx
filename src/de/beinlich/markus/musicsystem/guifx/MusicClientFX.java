@@ -138,7 +138,7 @@ public class MusicClientFX implements Runnable, MusicSystemInterface, MusicSyste
                 clientInit = (ClientInit) nachricht.getValue();
                 musicSystem = clientInit.getMusicSystem();
                 musicCollection = clientInit.getMusicCollection();
-                serverPool = ServerPool.getInstance(null).addServers(clientInit.getServerPool());
+                serverPool = ServerPool.getInstance(null).addServers(clientInit.getServerPool().getServers());
                 musicSystemState = musicSystem.activePlayer.musicSystemState;
                 record = musicSystem.activePlayer.record;
                 musicPlayer = musicSystem.activePlayer;
@@ -536,7 +536,7 @@ public class MusicClientFX implements Runnable, MusicSystemInterface, MusicSyste
                             });
                             break;
                         case SERVER_POOL:
-                            musicClient.serverPool = (ServerPool) nachricht.getValue();
+                            musicClient.serverPool.addServers((Map<String, ServerAddr>) nachricht.getValue());
                             Platform.runLater(() -> {
                                 serverPoolP.setAll(musicClient.serverPool.getActiveServers());
                             });
