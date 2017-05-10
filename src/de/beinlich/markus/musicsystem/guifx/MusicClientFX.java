@@ -17,18 +17,9 @@ import javafx.collections.FXCollections;
  */
 public class MusicClientFX implements Observer, Runnable, MusicSystemInterface, MusicSystemControllerInterface, MusicCollectionInterface {
 
-    // Verbindungsaufbau mit dem Server
-    public Socket socket;
-    private Socket newSocket;
-    private ServerAddr currentServerAddr;
-    private Thread readerThread;
-    //
-    // IO-Klassen zur Kommunikation
-    private ObjectInputStream ois;
-    private ObjectOutputStream oos;
-
     private final MusicClientNet musicClientNet;
 
+    private ServerAddr currentServerAddr;
     private MusicSystemDto musicSystem;
     private RecordInterface record;
     private ServerPool serverPool;
@@ -73,54 +64,10 @@ public class MusicClientFX implements Observer, Runnable, MusicSystemInterface, 
         System.out.println(System.currentTimeMillis() + "netzwerk eingerichtet: ");
     }
 
-//    private void musicSystemObjectRead() {
-//        Protokoll nachricht;
-//        ClientInit clientInit;
-//        System.out.println("musicSystemObjectRead");
-//        try {
-//            // Als erstes write den Namen des eigenen Client übergeben!
-////            oos.writeObject(new Protokoll(ProtokollType.CLIENT_NAME, clientName));
-//            oos.flush();
-//            try {
-//                // reinkommende Nachrichten vom Server. Auf diese muss gewartet werden, 
-//                // da ansonsten die initialisierung der GUI nicht funktioniert.
-//                nachricht = (Protokoll) ois.readObject(); // blockiert!
-//                clientInit = (ClientInit) nachricht.getValue();
-//                musicSystem = clientInit.getMusicSystem();
-//                musicCollection = clientInit.getMusicCollection();
-//                serverPool = ServerPool.getInstance().addServers(clientInit.getServerPool().getServers());
-//                musicSystemState = musicSystem.activePlayer.musicSystemState;
-//                record = musicSystem.activePlayer.record;
-//                musicPlayer = musicSystem.activePlayer;
-//                playListComponent = musicSystem.activePlayer.currentTrack;
-//                currentServerAddr = musicSystem.serverAddr;
-//
-//                Platform.runLater(() -> {
-//                    activePlayerP.set(musicSystem.activePlayer);
-//                    recordP.set(FXCollections.observableList(record.getTracks()));
-//                    playListComponentP.set(playListComponent);
-//                    musicPlayerP.set(FXCollections.observableList(musicSystem.players));
-//                    serverPoolP.set(FXCollections.observableList(ServerPool.getInstance().getActiveServers()));
-//                    getServerAddrP().set(musicSystem.serverAddr.getName());
-//                    musicCollectionP.set(FXCollections.observableList(musicCollection.records));
-//                    currentTimeTrackP.set(musicSystem.activePlayer.currentTimeTrack);
-//                    playingTimeP.set(musicSystem.activePlayer.currentTrack.playingTime);
-//                    volumeP.set(musicSystem.activePlayer.volume);
-//                    recordProp.set(record);
-//                });
-//            } catch (ClassNotFoundException ex) {
-//                System.out.println(ex);
-//            }
-//
-//        } catch (IOException ex) {
-//            System.out.println(System.currentTimeMillis() + "no connection - " + ex);
-//        }
-//    }
-
     public boolean switchToServer(String newServer) {
         return musicClientNet.switchToServer(newServer);
     }
-    
+
     @Override
     public MusicPlayerInterface getActivePlayer() {
         return (MusicPlayerInterface) musicPlayer;
@@ -382,7 +329,7 @@ public class MusicClientFX implements Observer, Runnable, MusicSystemInterface, 
         double volume;
         double trackTime;
         ClientInit clientInit;
-        System.out.println("Observer: " );
+        System.out.println("Observer: ");
         if (o instanceof MusicClientNet) {
             nachricht = (Protokoll) arg;
             System.out.println(System.currentTimeMillis() + "CLIENT: gelesen: " + nachricht + " - " + o.getClass());
