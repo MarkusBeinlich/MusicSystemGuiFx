@@ -4,17 +4,12 @@ import de.beinlich.markus.musicsystem.model.net.*;
 import de.beinlich.markus.musicsystem.model.*;
 import static de.beinlich.markus.musicsystem.model.net.ProtokollType.*;
 import java.io.*;
-import java.net.*;
 import java.util.*;
 import java.util.logging.*;
 import javafx.application.*;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 
-/**
- *
- * @author Markus Beinlich
- */
 public class MusicClientFX implements Observer, Runnable, MusicSystemInterface, MusicSystemControllerInterface, MusicCollectionInterface {
 
     private final MusicClientNet musicClientNet;
@@ -59,18 +54,11 @@ public class MusicClientFX implements Observer, Runnable, MusicSystemInterface, 
     public void run() {
         musicClientNet.addObserver(this);
         musicClientNet.netzwerkEinrichten();
-//        musicSystemObjectRead();
-//        startReaderThread();
         System.out.println(System.currentTimeMillis() + "netzwerk eingerichtet: ");
     }
 
     public boolean switchToServer(String newServer) {
         return musicClientNet.switchToServer(newServer);
-    }
-
-    @Override
-    public MusicPlayerInterface getActivePlayer() {
-        return (MusicPlayerInterface) musicPlayer;
     }
 
     @Override
@@ -91,21 +79,6 @@ public class MusicClientFX implements Observer, Runnable, MusicSystemInterface, 
     }
 
     @Override
-    public MusicSystemState getMusicSystemState() {
-        return musicSystemState;
-    }
-
-    @Override
-    public List<MusicPlayerInterface> getPlayers() {
-        return musicSystem.players;
-    }
-
-    @Override
-    public PlayListComponentInterface getCurrentTrack() {
-        return (PlayListComponentInterface) playListComponent;
-    }
-
-    @Override
     public String getMusicSystemName() {
         if (musicSystem == null) {
             return null;
@@ -116,16 +89,6 @@ public class MusicClientFX implements Observer, Runnable, MusicSystemInterface, 
     @Override
     public String getLocation() {
         return musicSystem.location;
-    }
-
-    @Override
-    public int getCurrentTimeTrack() {
-        return (int) getVolume();
-    }
-
-    @Override
-    public double getVolume() {
-        return volumeP.doubleValue();
     }
 
     @Override
@@ -220,19 +183,6 @@ public class MusicClientFX implements Observer, Runnable, MusicSystemInterface, 
     }
 
     @Override
-    public void setActivePlayer(MusicPlayerInterface activePlayer) throws IllegalePlayerException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public ServerAddr getServerAddr() {
-        if (musicSystem == null) {
-            return null;
-        }
-        return musicSystem.serverAddr;
-    }
-
-    @Override
     public boolean hasPause() {
         return musicSystem.activePlayer.hasPause;
     }
@@ -282,44 +232,8 @@ public class MusicClientFX implements Observer, Runnable, MusicSystemInterface, 
     }
 
     @Override
-    public MusicPlayerInterface getPlayer(String title) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
     public List<RecordInterface> getRecords() {
         return musicCollection.getRecords();
-    }
-
-    @Override
-    public RecordInterface getRecord(int i) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public MusicSystemDto getDto() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public MusicCollectionDto getMusicCollectionDto() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public RecordInterface getRecordById(int rid) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void setFormat(String format) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-
-    }
-
-    @Override
-    public void registerObserver(MusicCollectionObserver o) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
@@ -369,7 +283,6 @@ public class MusicClientFX implements Observer, Runnable, MusicSystemInterface, 
                     musicPlayer = (MusicPlayerDto) nachricht.getValue();
                     Platform.runLater(() -> {
                         this.musicSystem.activePlayer = musicPlayer;
-                        this.musicPlayer = musicPlayer;
                         activePlayerP.set(musicPlayer);
                     });
                     break;
@@ -472,10 +385,86 @@ public class MusicClientFX implements Observer, Runnable, MusicSystemInterface, 
         return playingTimeP;
     }
 
-    /**
-     * @return the serverAddrP
-     */
     public StringProperty getServerAddrP() {
         return serverAddrP;
+    }
+
+    @Override
+    public ServerAddr getServerAddr() {
+        if (musicSystem == null) {
+            return null;
+        }
+        return musicSystem.serverAddr;
+    }
+
+    @Override
+    public PlayListComponentInterface getCurrentTrack() {
+        return (PlayListComponentInterface) playListComponent;
+    }
+
+    @Override
+    public MusicPlayerInterface getActivePlayer() {
+        return (MusicPlayerInterface) musicPlayer;
+    }
+
+    @Override
+    public MusicSystemState getMusicSystemState() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public List<MusicPlayerInterface> getPlayers() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public int getCurrentTimeTrack() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public double getVolume() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void setActivePlayer(MusicPlayerInterface activePlayer) throws IllegalePlayerException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public RecordInterface getRecord(int i) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public MusicSystemDto getDto() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public MusicCollectionDto getMusicCollectionDto() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public RecordInterface getRecordById(int rid) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void setFormat(String format) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+
+    }
+
+    @Override
+    public void registerObserver(MusicCollectionObserver o) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public MusicPlayerInterface getPlayer(String title) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }
