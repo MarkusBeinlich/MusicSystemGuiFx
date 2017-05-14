@@ -86,13 +86,13 @@ public class FXMLDocumentController implements Initializable {
         buttonPause.setOnAction(event -> musicSystemController.pause());
         buttonCssProperties();
         buttonIpAddProperties();
-        
+
         comboBoxServerProperties();
         comboBoxRecordsProperties();
         comboBoxPlayerProperties();
-        
+
         listViewTrackListProperties();
-        
+
         sliderVolumeProperties();
         sliderProgressProperties();
 
@@ -136,7 +136,9 @@ public class FXMLDocumentController implements Initializable {
         comboBoxPlayer.itemsProperty().bindBidirectional(musicClient.getMusicPlayerP());
         comboBoxPlayer.getSelectionModel().select(musicSystem.getActivePlayer());
         comboBoxPlayer.setOnAction((event) -> {
-            musicSystemController.setActivePlayer(comboBoxPlayer.getValue().getTitle());
+            if (comboBoxPlayer != null && comboBoxPlayer.getValue() != null) {
+                musicSystemController.setActivePlayer(comboBoxPlayer.getValue().getTitle());
+            }
             //Werte des aktiven MusicPlayer anzeigen
             buttonPlay.setDisable(!musicSystem.hasPlay());
             buttonStop.setDisable(!musicSystem.hasStop());
@@ -183,7 +185,7 @@ public class FXMLDocumentController implements Initializable {
             comboBoxServer.getSelectionModel().select(musicSystem.getServerAddr().getName());
         }
         comboBoxServer.setOnAction((event) -> {
-            if (comboBoxServer.getValue() != null 
+            if (comboBoxServer.getValue() != null
                     && !comboBoxServer.getValue().equals(musicClient.getCurrentServerAddr().getName())) {
                 if (false == musicClient.switchToServer(comboBoxServer.getValue())) {
                     Alert alert = new Alert(Alert.AlertType.ERROR, "Server " + comboBoxServer.getValue() + " ist im Moment nicht erreichbar. Eventuell ist er nicht gestartet.");

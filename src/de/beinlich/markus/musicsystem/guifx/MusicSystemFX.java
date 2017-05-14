@@ -31,9 +31,6 @@ public class MusicSystemFX extends Application {
         clientThread = new Thread(musicClient);
         clientThread.setDaemon(true);
         clientThread.start();
-//        Platform.runLater(() -> {
-//            musicClient.connectToMusicServer();
-//        });
 
     }
 

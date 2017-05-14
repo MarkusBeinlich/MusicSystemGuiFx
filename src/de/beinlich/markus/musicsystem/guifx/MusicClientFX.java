@@ -68,7 +68,7 @@ public class MusicClientFX implements Observer, Runnable, MusicSystemInterface, 
 
     @Override
     public void setRecord(RecordInterface record) {
-        if (!this.record.equals(record)) {
+        if (record != null && !this.record.equals(record)) {
             try {
                 musicClientNet.writeObject(new Protokoll(RECORD_SELECTED, record));
             } catch (InvalidObjectException ex) {
@@ -184,41 +184,63 @@ public class MusicClientFX implements Observer, Runnable, MusicSystemInterface, 
 
     @Override
     public boolean hasPause() {
-        return musicSystem.activePlayer.hasPause;
+        if (musicSystem != null & musicSystem.activePlayer != null) {
+            return musicSystem.activePlayer.hasPause;
+        }
+        return false;
     }
 
     @Override
     public boolean hasPlay() {
-        return musicSystem.activePlayer.hasPlay;
+        if (musicSystem != null & musicSystem.activePlayer != null) {
+            return musicSystem.activePlayer.hasPlay;
+        }
+        return false;
     }
 
     @Override
     public boolean hasNext() {
-        return musicSystem.activePlayer.hasNext;
+        if (musicSystem != null & musicSystem.activePlayer != null) {
+            return musicSystem.activePlayer.hasNext;
+        }
+        return false;
     }
 
     @Override
     public boolean hasPrevious() {
-        return musicSystem.activePlayer.hasPrevious;
+        if (musicSystem != null & musicSystem.activePlayer != null) {
+            return musicSystem.activePlayer.hasPrevious;
+        }
+        return false;
     }
 
     @Override
     public boolean hasStop() {
-        return musicSystem.activePlayer.hasStop;
+        if (musicSystem != null & musicSystem.activePlayer != null) {
+            return musicSystem.activePlayer.hasStop;
+        }
+        return false;
     }
 
     @Override
     public boolean hasTracks() {
-        return musicSystem.activePlayer.hasTracks;
+        if (musicSystem != null & musicSystem.activePlayer != null) {
+            return musicSystem.activePlayer.hasTracks;
+        }
+        return false;
     }
 
     @Override
     public boolean hasCurrentTime() {
-        return musicSystem.activePlayer.hasCurrentTime;
+        if (musicSystem != null & musicSystem.activePlayer != null) {
+            return musicSystem.activePlayer.hasCurrentTime;
+        }
+        return false;
     }
 
     @Override
-    public void setActivePlayer(String selectedPlayer) {
+    public void setActivePlayer(String selectedPlayer
+    ) {
 
         if (!(musicPlayer.title.equals(selectedPlayer))) {
             try {
@@ -237,7 +259,8 @@ public class MusicClientFX implements Observer, Runnable, MusicSystemInterface, 
     }
 
     @Override
-    public void update(Observable o, Object arg) {
+    public void update(Observable o, Object arg
+    ) {
         Protokoll nachricht;
         MusicSystemState state;
         double volume;
@@ -270,6 +293,30 @@ public class MusicClientFX implements Observer, Runnable, MusicSystemInterface, 
                         currentTimeTrackP.set(musicSystem.activePlayer.currentTimeTrack);
                         playingTimeP.set(musicSystem.activePlayer.currentTrack.playingTime);
                         volumeP.set(musicSystem.activePlayer.volume);
+                        recordProp.set(record);
+                    });
+                    break;
+                case SERVER_DISCONNECT:
+                    musicSystem = new MusicSystemDto();
+                    currentServerAddr = null;
+                    musicCollection = new MusicCollectionDto();
+                    ServerPool.getInstance().clear();
+                    musicSystemState = null;
+                    record = new RecordDto();
+                    musicPlayer = new MusicPlayerDto();
+                    playListComponent = new PlayListComponentDto();
+
+                    Platform.runLater(() -> {
+                        activePlayerP.set(musicSystem.activePlayer);
+                        recordP.set(FXCollections.observableList(new ArrayList<>()));
+                        playListComponentP.set(playListComponent);
+                        musicPlayerP.set(FXCollections.observableList(new ArrayList<>()));
+                        serverPoolP.set(FXCollections.observableList(ServerPool.getInstance().getActiveServers()));
+                        getServerAddrP().set(null);
+                        musicCollectionP.set(FXCollections.observableList(new ArrayList<>()));
+                        currentTimeTrackP.set(0.0);
+                        playingTimeP.set(0.0);
+                        volumeP.set(0.0);
                         recordProp.set(record);
                     });
                     break;
@@ -318,7 +365,7 @@ public class MusicClientFX implements Observer, Runnable, MusicSystemInterface, 
                     });
                     break;
                 case SERVER_POOL:
-                    this.serverPool.addServers((Map<String, ServerAddr>) nachricht.getValue());
+                    this.serverPool.setServers((Map<String, ServerAddr>) nachricht.getValue());
                     Platform.runLater(() -> {
                         serverPoolP.setAll(this.serverPool.getActiveServers());
                     });
