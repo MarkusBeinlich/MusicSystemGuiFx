@@ -261,6 +261,7 @@ public class MusicClientFX implements Observer, Runnable, MusicSystemInterface, 
     @Override
     public void update(Observable o, Object arg
     ) {
+        Thread clientThread;
         Protokoll nachricht;
         MusicSystemState state;
         double volume;
@@ -318,7 +319,12 @@ public class MusicClientFX implements Observer, Runnable, MusicSystemInterface, 
                         playingTimeP.set(0.0);
                         volumeP.set(0.0);
                         recordProp.set(record);
+
                     });
+                    //Neustart des Client
+                    clientThread = new Thread(this);
+                    clientThread.setDaemon(true);
+                    clientThread.start();
                     break;
                 case MUSIC_COLLECTION_DTO:
                     this.musicCollection = (MusicCollectionDto) nachricht.getValue();

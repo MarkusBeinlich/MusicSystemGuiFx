@@ -16,6 +16,7 @@ import de.beinlich.markus.musicsystem.model.net.*;
 import java.net.*;
 import java.util.logging.*;
 import javafx.event.*;
+import javafx.scene.input.*;
 
 /**
  *
@@ -84,6 +85,7 @@ public class FXMLDocumentController implements Initializable {
         buttonNext.setOnAction(event -> musicSystemController.next());
         buttonPrevious.setOnAction(event -> musicSystemController.previous());
         buttonPause.setOnAction(event -> musicSystemController.pause());
+
         buttonCssProperties();
         buttonIpAddProperties();
 
@@ -124,11 +126,14 @@ public class FXMLDocumentController implements Initializable {
         comboBoxRecords.itemsProperty().bindBidirectional(musicClient.getMusicCollectionP());
         comboBoxRecords.getSelectionModel().select(musicSystem.getRecord());
         comboBoxRecords.setOnAction((ActionEvent event) -> {
+            System.out.println("comboBoxRecords: " + musicSystem.getRecord() + " - " + comboBoxRecords.getValue());
             musicSystemController.setRecord(comboBoxRecords.getValue());
-            cover.setImage(showCover());
+
         });
         musicClient.getRecordProp().addListener((observable, oldValue, newValue) -> {
+            System.out.println("getRecordProp: " + newValue);
             comboBoxRecords.getSelectionModel().select(newValue);
+            cover.setImage(showCover());
         });
     }
 
