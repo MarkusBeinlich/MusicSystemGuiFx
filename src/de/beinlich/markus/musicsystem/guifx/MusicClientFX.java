@@ -284,16 +284,23 @@ public class MusicClientFX implements Observer, Runnable, MusicSystemInterface, 
                     currentServerAddr = musicSystem.serverAddr;
 
                     Platform.runLater(() -> {
+                        System.out.println("CLIENT_INIT 1:" );
+                        musicCollectionP.set(FXCollections.observableList(new ArrayList<>()));
                         activePlayerP.set(musicSystem.activePlayer);
+                         System.out.println("CLIENT_INIT 2:" );
                         recordP.set(FXCollections.observableList(record.getTracks()));
+                         System.out.println("CLIENT_INIT 3:" );
                         playListComponentP.set(playListComponent);
                         musicPlayerP.set(FXCollections.observableList(musicSystem.players));
                         serverPoolP.set(FXCollections.observableList(ServerPool.getInstance().getActiveServers()));
                         getServerAddrP().set(musicSystem.serverAddr.getName());
+                         System.out.println("CLIENT_INIT 4:" );
                         musicCollectionP.set(FXCollections.observableList(musicCollection.records));
+                         System.out.println("CLIENT_INIT 5:" );
                         currentTimeTrackP.set(musicSystem.activePlayer.currentTimeTrack);
                         playingTimeP.set(musicSystem.activePlayer.currentTrack.playingTime);
                         volumeP.set(musicSystem.activePlayer.volume);
+                        System.out.println("CLIENT_INIT vor RecordProp:" + record);
                         recordProp.set(record);
                     });
                     break;

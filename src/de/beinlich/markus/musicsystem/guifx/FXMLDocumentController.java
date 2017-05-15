@@ -87,7 +87,6 @@ public class FXMLDocumentController implements Initializable {
         buttonPause.setOnAction(event -> musicSystemController.pause());
 
         buttonCssProperties();
-        buttonIpAddProperties();
 
         comboBoxServerProperties();
         comboBoxRecordsProperties();
@@ -112,20 +111,10 @@ public class FXMLDocumentController implements Initializable {
         });
     }
 
-    private void buttonIpAddProperties() {
-        buttonIpAdd.setOnAction(event -> {
-            try {
-                musicClient.getServerPool().addServer("Local", new ServerAddr(50001, InetAddress.getLocalHost().getHostAddress(), "Local", true));
-            } catch (UnknownHostException ex) {
-                Logger.getLogger(AddLocalIpToServerPool.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        });
-    }
-
     private void comboBoxRecordsProperties() {
         comboBoxRecords.itemsProperty().bindBidirectional(musicClient.getMusicCollectionP());
         comboBoxRecords.getSelectionModel().select(musicSystem.getRecord());
-        comboBoxRecords.setOnAction((ActionEvent event) -> {
+        comboBoxRecords.setOnAction((event) -> { 
             System.out.println("comboBoxRecords: " + musicSystem.getRecord() + " - " + comboBoxRecords.getValue());
             musicSystemController.setRecord(comboBoxRecords.getValue());
 

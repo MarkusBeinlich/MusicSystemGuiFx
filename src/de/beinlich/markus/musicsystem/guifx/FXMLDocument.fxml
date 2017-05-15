@@ -21,7 +21,6 @@
             <Button id="buttonPause" fx:id="buttonPause" text="Pause" />
             <Button id="buttonStop" fx:id="buttonStop" mnemonicParsing="false" text="Stop" />
             <Button fx:id="buttonCSS" mnemonicParsing="false" text="CSS" />
-            <Button fx:id="buttonIpAdd" mnemonicParsing="false" text="IP-Add" />
         </buttons>
          <padding>
             <Insets bottom="1.0" />
