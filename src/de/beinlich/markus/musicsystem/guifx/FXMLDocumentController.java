@@ -12,11 +12,6 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.image.*;
 import de.beinlich.markus.musicsystem.model.*;
-import de.beinlich.markus.musicsystem.model.net.*;
-import java.net.*;
-import java.util.logging.*;
-import javafx.event.*;
-import javafx.scene.input.*;
 
 /**
  *
